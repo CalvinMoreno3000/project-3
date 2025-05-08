@@ -1,0 +1,110 @@
+# This is ONLY for testing. You can delete if you have your own CSV and TXT files.
+csv_content = """Date,Miles Driven,Gallons Filled,MPG
+2025-04-01,120,4.0,30.0
+2025-04-02,90,3.0,30.0
+2025-04-03,150,5.0,30.0
+2025-04-04,80,3.5,22.9
+2025-04-05,100,3.8,26.3
+"""
+
+txt_content = """2025-04-01: Highway driving, smooth roads
+2025-04-02: Heavy traffic, used AC
+2025-04-03: Mostly highway, good weather
+2025-04-04: City driving, many stops
+2025-04-05: Mixed driving, light rain
+"""
+
+with open("gas_log.csv", "w") as f:
+    f.write(csv_content)
+
+with open("driving_notes.txt", "w") as f:
+    f.write(txt_content)
+
+
+# IMPORT LIBRARIES
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# TRY TO READ FILES WITH ERROR HANDLING
+try:
+    df = pd.read_csv("gas_log.csv")
+    with open("driving_notes.txt", "r") as file:
+        notes = file.read().lower()
+except FileNotFoundError:
+    print(" One or more files are missing. Make sure 'gas_log.csv' and 'driving_notes.txt' exist.")
+    exit()
+
+# NumPy statistical calculations
+mpg_array = np.array(df["MPG"])
+average_mpg = np.round(np.mean(mpg_array), 2)
+median_mpg = np.round(np.median(mpg_array), 2)
+std_dev_mpg = np.round(np.std(mpg_array), 2)
+
+total_miles = df["Miles Driven"].sum()
+best_mpg = df["MPG"].max()
+worst_mpg = df["MPG"].min()
+
+best_day = df[df["MPG"] == best_mpg]["Date"].values[0]
+worst_day = df[df["MPG"] == worst_mpg]["Date"].values[0]
+
+# Print results
+print("\n Basic Stats:")
+print(f"Average MPG: {average_mpg}")
+print(f"Median MPG: {median_mpg}")
+print(f"MPG Standard Deviation: {std_dev_mpg}")
+print(f"Total Miles Driven: {total_miles}")
+print(f"Best MPG Day: {best_day}")
+print(f"Worst MPG Day: {worst_day}")
+
+#  TXT ANALYSIS: Keyword Counts
+keywords = ["traffic", "highway", "city", "ac", "rain", "smooth"]
+keyword_counts = {word: notes.count(word) for word in keywords}
+
+print("\n Driving Condition Keywords:")
+for word, count in keyword_counts.items():
+    print(f"{word}: {count} time(s)")
+
+# Save stats to CSV
+summary_data = {
+    "Average MPG": [average_mpg],
+    "Median MPG": [median_mpg],
+    "MPG Std Dev": [std_dev_mpg],
+    "Total Miles Driven": [total_miles],
+    "Best MPG Day": [best_day],
+    "Worst MPG Day": [worst_day]
+}
+summary_df = pd.DataFrame(summary_data)
+summary_df.to_csv("mileage_summary.csv", index=False)
+
+# Save keyword summary to TXT
+with open("keyword_summary.txt", "w") as f:
+    for word, count in keyword_counts.items():
+        f.write(f"{word}: {count} time(s)\n")
+
+# MATPLOTLIB VISUALIZATIONS
+# Line graph: MPG over time
+plt.figure()
+plt.plot(df["Date"], df["MPG"], marker='o')
+plt.title("MPG Over Time")
+plt.xlabel("Date")
+plt.ylabel("MPG")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Bar chart: Miles driven per day
+plt.figure()
+plt.bar(df["Date"], df["Miles Driven"])
+plt.title("Miles Driven Per Day")
+plt.xlabel("Date")
+plt.ylabel("Miles")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Pie chart: Driving condition keyword counts
+plt.figure()
+plt.pie(keyword_counts.values(), labels=keyword_counts.keys(), autopct="%1.1f%%")
+plt.title("Driving Conditions from Notes")
+plt.show()
